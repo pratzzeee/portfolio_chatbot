@@ -18,7 +18,12 @@ load_dotenv()
 
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-st.set_page_config(page_title="Aria", page_icon="🤖", layout="centered")
+st.set_page_config(
+    page_title="Aria",
+    page_icon="🤖",
+    layout="centered"
+)
+
 st.markdown(APPLE_CSS, unsafe_allow_html=True)
 
 # ── Session state init ─────────────────────────────────────
@@ -29,31 +34,36 @@ if "docs_cleared" not in st.session_state:
 if "uploader_key" not in st.session_state:
     st.session_state.uploader_key = 0
 
-# ── Sidebar ────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown(LOGO_HTML, unsafe_allow_html=True)
+# ── Header ─────────────────────────────────────────────────
+st.markdown(HEADER_HTML, unsafe_allow_html=True)
 
-    st.markdown(LABEL_HTML.format("Model"), unsafe_allow_html=True)
-    model = st.selectbox("model", MODELS, index=0, label_visibility="collapsed")
+# ── Mode toggle — always visible ───────────────────────────
+mode = st.radio(
+    "Chat mode",
+    ["💬 Normal Chat", "📁 Document Chat"],
+    horizontal=True,
+    label_visibility="collapsed"
+)
 
-    st.markdown(LABEL_HTML.format("Temperature"), unsafe_allow_html=True)
-    temperature = st.slider("temperature", 0.0, 1.0, DEFAULT_TEMPERATURE, 0.1, label_visibility="collapsed")
+# ── Settings expander ──────────────────────────────────────
+with st.expander("⚙️ Settings", expanded=False):
+    col1, col2 = st.columns(2)
 
-    st.divider()
+    with col1:
+        st.markdown(LABEL_HTML.format("Model"), unsafe_allow_html=True)
+        model = st.selectbox("model", MODELS, index=0, label_visibility="collapsed")
 
-    st.markdown(LABEL_HTML.format("Mode"), unsafe_allow_html=True)
-    mode = st.radio(
-        "mode",
-        ["💬 Normal Chat", "📁 Document Chat"],
-        label_visibility="collapsed"
-    )
+    with col2:
+        st.markdown(LABEL_HTML.format("Temperature"), unsafe_allow_html=True)
+        temperature = st.slider("temperature", 0.0, 1.0, DEFAULT_TEMPERATURE, 0.1, label_visibility="collapsed")
 
-    docs_ready = False
+    st.markdown(TECH_STACK_HTML, unsafe_allow_html=True)
 
-    if mode == "📁 Document Chat":
-        st.divider()
-        st.markdown(LABEL_HTML.format("Documents"), unsafe_allow_html=True)
+# ── Document upload expander ───────────────────────────────
+docs_ready = False
 
+if mode == "📁 Document Chat":
+    with st.expander("📁 Documents", expanded=True):
         uploaded_files = st.file_uploader(
             "Upload files",
             type=SUPPORTED_TYPES,
@@ -67,23 +77,21 @@ with st.sidebar:
         elif uploaded_files and st.session_state.docs_cleared:
             st.session_state.docs_cleared = False
 
-        if st.button("🗑️ Clear documents"):
-            clear_index()
-            st.session_state.docs_cleared = True
-            st.session_state.messages = []
-            st.session_state.uploader_key += 1
-            st.rerun()
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🗑️ Clear documents", use_container_width=True):
+                clear_index()
+                st.session_state.docs_cleared = True
+                st.session_state.messages = []
+                st.session_state.uploader_key += 1
+                st.rerun()
 
-    st.divider()
-    st.markdown(TECH_STACK_HTML, unsafe_allow_html=True)
-    st.divider()
+# ── Clear conversation ─────────────────────────────────────
+if st.button("🗑️ Clear conversation", use_container_width=True):
+    st.session_state.messages = []
+    st.rerun()
 
-    if st.button("🗑️ Clear conversation"):
-        st.session_state.messages = []
-        st.rerun()
-
-# ── Header ─────────────────────────────────────────────────
-st.markdown(HEADER_HTML, unsafe_allow_html=True)
+st.divider()
 
 # ── Welcome screen ─────────────────────────────────────────
 if not st.session_state.messages:
