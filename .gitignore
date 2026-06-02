@@ -2,3 +2,9 @@ venv/
 .env
 __pycache__/
 .DS_Store.env
+.DS_Store
+*.pdf
+snaps/
+app_test.py
+debug_css.py
+test*.py
